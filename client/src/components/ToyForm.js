@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
 function ToyForm({ onAddToy }) {
+  const [errors, setErrors] = useState([])
   const [formData, setFormData] = useState({
     name: "",
     image: "",
@@ -13,7 +14,7 @@ function ToyForm({ onAddToy }) {
     });
   }
 
-  function handleSubmit(event) {
+async function handleSubmit(event) {
     event.preventDefault();
 
     const newToy = {
@@ -21,21 +22,25 @@ function ToyForm({ onAddToy }) {
       likes: 0,
     };
 
-    fetch("/toys", {
+    const response = await fetch("/toys", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(newToy),
     })
-      .then((r) => r.json())
-      .then((newToy) => {
-        setFormData({
-          name: "",
-          image: "",
-        });
-        onAddToy(newToy);
-      });
+    const data = await response.json()
+    if(response.ok){
+      onAddToy(data)
+      setFormData({
+        name: "",
+        image: "",
+      })
+      setErrors([]);
+    }
+    else {
+      setErrors(data.errors)
+    }
   }
 
   return (
@@ -66,6 +71,11 @@ function ToyForm({ onAddToy }) {
           value="Create New Toy"
           className="submit"
         />
+        {errors.length > 0 ?
+        errors.map((error)=> {
+         return <li>{error}</li>
+        }) :
+        null}
       </form>
     </div>
   );
